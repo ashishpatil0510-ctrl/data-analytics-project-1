@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FUTURE_DS_01 — Sales Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0d14;
+    --surface: #111520;
+    --surface2: #161b2e;
+    --border: #1e2640;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #f472b6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --gold: #fbbf24;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0f1629 0%, #1a1040 50%, #0f1629 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(79,142,247,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 20%;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .header-left h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #4f8ef7, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+  .header-left p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .header-right {
+    text-align: right;
+  }
+  .header-right .badge {
+    display: inline-block;
+    background: rgba(79,142,247,0.15);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: var(--accent);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .header-right p {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  /* ── LAYOUT ── */
+  main {
+    padding: 2rem 3rem;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  section-title {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.2rem;
+    margin-top: 2.5rem;
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  @media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 700px)  { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(79,142,247,0.4);
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--accent));
+  }
+  .kpi-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.7rem;
+  }
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+  .kpi-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-sub {
+    font-size: 0.72rem;
+    color: var(--accent3);
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  /* ── CHARTS GRID ── */
+  .chart-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+  @media (max-width: 1100px) {
+    .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .card-subtitle {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 260px;
+  }
+  .chart-wrap-tall {
+    position: relative;
+    height: 320px;
+  }
+
+  /* ── PRODUCT TABLE ── */
+  .product-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .product-table th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 0 0.8rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .product-table td {
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .product-table tr:last-child td { border-bottom: none; }
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+  .rank-badge.gold   { background: rgba(251,191,36,0.15); color: var(--gold); }
+  .rank-badge.silver { background: rgba(148,163,184,0.15); color: #94a3b8; }
+  .rank-badge.bronze { background: rgba(251,146,60,0.15); color: var(--accent4); }
+
+  .bar-mini {
+    height: 5px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    margin-top: 4px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── INSIGHTS ── */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 800px) { .insights-grid { grid-template-columns: 1fr; } }
+
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .insight-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .insight-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 5px;
+  }
+  .insight-text {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .highlight { color: var(--accent3); font-weight: 600; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>📊 Sales Analytics Dashboard</h1>
+    <p>FUTURE_DS_01 · Online Retail Dataset · Dec 2010 – Dec 2011</p>
+  </div>
+  <div class="header-right">
+    <div class="badge">FutureInterns Task 01</div>
+    <p>541,909 records · 38 countries · 12 months</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- KPIs -->
+  <section-title>Key Performance Indicators</section-title>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--card-accent:#4f8ef7">
+      <div class="kpi-icon">💷</div>
+      <div class="kpi-value">£10.67M</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-sub">↑ 30% peak in Q4 2011</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#a78bfa">
+      <div class="kpi-icon">🧾</div>
+      <div class="kpi-value">22,190</div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-sub">Avg £534 per order</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#34d399">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-value">4,338</div>
+      <div class="kpi-label">Unique Customers</div>
+      <div class="kpi-sub">Strong repeat base</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#fb923c">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-value">4,026</div>
+      <div class="kpi-label">Unique Products</div>
+      <div class="kpi-sub">5.5M+ units sold</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#f472b6">
+      <div class="kpi-icon">🌍</div>
+      <div class="kpi-value">38</div>
+      <div class="kpi-label">Countries</div>
+      <div class="kpi-sub">UK drives 85% rev</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#fbbf24">
+      <div class="kpi-icon">❌</div>
+      <div class="kpi-value">1.7%</div>
+      <div class="kpi-label">Cancellation Rate</div>
+      <div class="kpi-sub">Healthy threshold</div>
+    </div>
+  </div>
+
+  <!-- Revenue Trend + Quarterly -->
+  <section-title>Revenue Trends</section-title>
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Monthly Revenue Trend</div>
+      <div class="card-subtitle">Dec 2010 – Dec 2011 · Strong Q4 2011 uplift</div>
+      <div class="chart-wrap-tall">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Quarterly Revenue & Growth</div>
+      <div class="card-subtitle">Quarter-on-quarter performance</div>
+      <div class="chart-wrap-tall">
+        <canvas id="quarterlyChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Products + Countries -->
+  <section-title>Products & Regional Performance</section-title>
+  <div class="chart-grid-3">
+    <div class="card">
+      <div class="card-title">Top 10 Products by Revenue</div>
+      <div class="card-subtitle">Ranking of highest-earning SKUs</div>
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th style="text-align:right">Revenue</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Revenue by Country</div>
+      <div class="card-subtitle">Top 8 markets</div>
+      <div class="chart-wrap-tall">
+        <canvas id="countryChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Top Products — Volume</div>
+      <div class="card-subtitle">Units sold by product</div>
+      <div class="chart-wrap-tall">
+        <canvas id="volumeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue split pie + growth bar -->
+  <div class="chart-grid-2">
+    <div class="card">
+      <div class="card-title">Market Share by Country</div>
+      <div class="card-subtitle">Revenue distribution across regions</div>
+      <div class="chart-wrap">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Revenue vs Orders — Monthly</div>
+      <div class="card-subtitle">Volume correlation with revenue</div>
+      <div class="chart-wrap">
+        <canvas id="dualChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insights -->
+  <section-title>Insights & Recommendations</section-title>
+  <div class="insights-grid">
+    <div class="insight-card">
+      <div class="insight-icon">📈</div>
+      <div>
+        <div class="insight-title">Q4 2011 — Peak Season Surge</div>
+        <div class="insight-text">Revenue hit <span class="highlight">£1.51M in November</span> alone — the single highest month. Q4 2011 was 30% above Q3. This is a clear gifting/holiday pattern. <strong>Recommendation:</strong> Pre-load inventory and launch marketing campaigns by September each year to capture this surge early.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🏆</div>
+      <div>
+        <div class="insight-title">Star Products Drive Disproportionate Revenue</div>
+        <div class="insight-text">The top 10 products contribute a significant share of total revenue. <span class="highlight">Regency Cakestand 3 Tier (£174K)</span> and Paper Craft Little Birdie (£168K) are standouts. <strong>Recommendation:</strong> Protect stock levels on these SKUs and explore bundle offers to increase basket size.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🌍</div>
+      <div>
+        <div class="insight-title">UK Dependency — Diversification Needed</div>
+        <div class="insight-text">The United Kingdom accounts for <span class="highlight">85% of total revenue</span>. Netherlands (£285K) and EIRE (£283K) are the only international markets crossing £250K. <strong>Recommendation:</strong> Invest in targeted campaigns for Germany and France which show high order frequency but low average value.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">💡</div>
+      <div>
+        <div class="insight-title">Average Order Value Opportunity</div>
+        <div class="insight-text">Average order value is <span class="highlight">£534</span>. High-volume, low-margin products (e.g. Cake Cases, Retrospot Bags) inflate unit counts but suppress revenue per order. <strong>Recommendation:</strong> Bundle low-margin bestsellers with premium items. Introduce a "Free shipping above £600" incentive to nudge AOV upward.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>FUTURE_DS_01 · FutureInterns Internship Task 1 · Online Retail Analysis</span>
+  <span>Data: UCI Online Retail Dataset · Dec 2010 – Dec 2011 · 541K rows</span>
+</footer>
+
+<script>
+// ─── DATA ───────────────────────────────────────────
+const monthly = {
+  labels: ['Dec 10','Jan 11','Feb 11','Mar 11','Apr 11','May 11','Jun 11',
+           'Jul 11','Aug 11','Sep 11','Oct 11','Nov 11','Dec 11'],
+  revenue: [823746,691365,523632,717639,537809,770536,761740,
+            719221,759138,1058590,1154979,1509496,638793]
+};
+
+const quarterly = {
+  labels: ['Q4 2010','Q1 2011','Q2 2011','Q3 2011','Q4 2011'],
+  revenue: [823746, 1932636, 2070085, 2536950, 3303268],
+  growth:  [null, 134.6, 7.1, 22.6, 30.2]
+};
+
+const topProducts = [
+  { name: 'DOTCOM POSTAGE',              rev: 206249 },
+  { name: 'REGENCY CAKESTAND 3 TIER',   rev: 174485 },
+  { name: 'PAPER CRAFT, LITTLE BIRDIE', rev: 168470 },
+  { name: 'WHITE HANGING HEART T-LIGHT',rev: 106293 },
+  { name: 'PARTY BUNTING',              rev: 99504  },
+  { name: 'JUMBO BAG RED RETROSPOT',    rev: 94340  },
+  { name: 'MEDIUM CERAMIC STORAGE JAR', rev: 81701  },
+  { name: 'RABBIT NIGHT LIGHT',         rev: 66965  },
+  { name: 'PAPER CHAIN KIT 50S XMAS',   rev: 64952  },
+  { name: 'ASSORTED COLOUR BIRD ORNA.',  rev: 59095  },
+];
+
+const countries = {
+  labels: ['United Kingdom','Netherlands','EIRE','Germany','France','Australia','Spain','Switzerland'],
+  revenue: [9025222, 285446, 283454, 228867, 209715, 138521, 61577, 57090]
+};
+
+const volumeProducts = {
+  labels: ['PAPER CRAFT','CERAMIC JAR','WW2 GLIDERS','JUMBO BAG RED','W.HEART T-LIGHT',
+           'POPCORN HOLDER','BIRD ORNAMENT','RETROSPOT CASES','RABBIT NIGHT LT','PAINT SET'],
+  qty: [80995, 78033, 55047, 48474, 37891, 36761, 36461, 36419, 30788, 26633]
+};
+
+const monthlyOrders = [944,626,563,755,614,760,706,681,721,1077,1138,1428,657];
+
+// ─── HELPERS ────────────────────────────────────────
+const fmtK = v => v >= 1e6 ? '£'+(v/1e6).toFixed(2)+'M' : '£'+(v/1000).toFixed(0)+'K';
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+const gridOpts = {
+  color: 'rgba(255,255,255,0.05)',
+  drawBorder: false
+};
+
+// ─── MONTHLY LINE CHART ──────────────────────────────
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'line',
+  data: {
+    labels: monthly.labels,
+    datasets: [{
+      label: 'Revenue',
+      data: monthly.revenue,
+      borderColor: '#4f8ef7',
+      backgroundColor: 'rgba(79,142,247,0.08)',
+      borderWidth: 2.5,
+      pointBackgroundColor: '#4f8ef7',
+      pointRadius: 4,
+      pointHoverRadius: 7,
+      fill: true,
+      tension: 0.4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: gridOpts, ticks: { font: { size: 10 } } },
+      y: {
+        grid: gridOpts,
+        ticks: {
+          callback: v => fmtK(v),
+          font: { size: 10 }
+        }
+      }
+    }
+  }
+});
+
+// ─── QUARTERLY COMBO ────────────────────────────────
+new Chart(document.getElementById('quarterlyChart'), {
+  type: 'bar',
+  data: {
+    labels: quarterly.labels,
+    datasets: [
+      {
+        label: 'Revenue',
+        data: quarterly.revenue,
+        backgroundColor: ['rgba(167,139,250,0.7)','rgba(79,142,247,0.7)',
+                          'rgba(52,211,153,0.7)','rgba(251,146,60,0.7)','rgba(244,114,182,0.7)'],
+        borderRadius: 8,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Growth %',
+        data: quarterly.growth,
+        type: 'line',
+        borderColor: '#fbbf24',
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#fbbf24',
+        pointRadius: 5,
+        tension: 0.4,
+        yAxisID: 'y2'
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { boxWidth: 12, font: { size: 11 } } }
+    },
+    scales: {
+      x: { grid: gridOpts },
+      y: {
+        grid: gridOpts,
+        ticks: { callback: v => fmtK(v), font: { size: 10 } }
+      },
+      y2: {
+        position: 'right',
+        grid: { display: false },
+        ticks: { callback: v => v == null ? '' : v+'%', font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// ─── PRODUCT TABLE ───────────────────────────────────
+const tbody = document.getElementById('productTableBody');
+const maxRev = topProducts[0].rev;
+topProducts.forEach((p, i) => {
+  const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+  const pct = (p.rev / maxRev * 100).toFixed(0);
+  tbody.innerHTML += `
+    <tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td>
+        <div style="font-size:0.79rem;color:#e2e8f0">${p.name}</div>
+        <div class="bar-mini" style="width:${pct}%"></div>
+      </td>
+      <td style="text-align:right;font-family:'Syne',sans-serif;font-size:0.82rem;color:#4f8ef7">
+        ${fmtK(p.rev)}
+      </td>
+    </tr>`;
+});
+
+// ─── COUNTRY BAR ────────────────────────────────────
+new Chart(document.getElementById('countryChart'), {
+  type: 'bar',
+  data: {
+    labels: countries.labels,
+    datasets: [{
+      label: 'Revenue',
+      data: countries.revenue,
+      backgroundColor: [
+        'rgba(79,142,247,0.8)','rgba(52,211,153,0.75)','rgba(167,139,250,0.75)',
+        'rgba(251,146,60,0.75)','rgba(244,114,182,0.75)','rgba(251,191,36,0.75)',
+        'rgba(56,189,248,0.75)','rgba(248,113,113,0.75)'
+      ],
+      borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        grid: gridOpts,
+        ticks: { callback: v => fmtK(v), font: { size: 9 } }
+      },
+      y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+    }
+  }
+});
+
+// ─── VOLUME CHART ────────────────────────────────────
+new Chart(document.getElementById('volumeChart'), {
+  type: 'bar',
+  data: {
+    labels: volumeProducts.labels,
+    datasets: [{
+      label: 'Units Sold',
+      data: volumeProducts.qty,
+      backgroundColor: 'rgba(52,211,153,0.7)',
+      borderRadius: 6
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        grid: gridOpts,
+        ticks: { callback: v => (v/1000).toFixed(0)+'K', font: { size: 9 } }
+      },
+      y: { grid: { display: false }, ticks: { font: { size: 9 } } }
+    }
+  }
+});
+
+// ─── PIE CHART ───────────────────────────────────────
+new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: [...countries.labels, 'Others'],
+    datasets: [{
+      data: [...countries.revenue, 10666685 - countries.revenue.reduce((a,b)=>a+b,0)],
+      backgroundColor: [
+        '#4f8ef7','#34d399','#a78bfa','#fb923c','#f472b6',
+        '#fbbf24','#38bdf8','#f87171','#64748b'
+      ],
+      borderWidth: 0,
+      hoverOffset: 10
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    cutout: '62%',
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { boxWidth: 10, font: { size: 9 }, padding: 8 }
+      }
+    }
+  }
+});
+
+// ─── DUAL AXIS: Revenue + Orders ─────────────────────
+new Chart(document.getElementById('dualChart'), {
+  type: 'bar',
+  data: {
+    labels: monthly.labels,
+    datasets: [
+      {
+        label: 'Revenue',
+        data: monthly.revenue,
+        backgroundColor: 'rgba(79,142,247,0.6)',
+        borderRadius: 5,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Orders',
+        data: monthlyOrders,
+        type: 'line',
+        borderColor: '#f472b6',
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#f472b6',
+        pointRadius: 4,
+        tension: 0.4,
+        yAxisID: 'y2'
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { boxWidth: 10, font: { size: 10 } } }
+    },
+    scales: {
+      x: { grid: gridOpts, ticks: { font: { size: 9 } } },
+      y: {
+        grid: gridOpts,
+        ticks: { callback: v => fmtK(v), font: { size: 9 } }
+      },
+      y2: {
+        position: 'right',
+        grid: { display: false },
+        ticks: { font: { size: 9 } }
+      }
+    }
+  }
+});
+</script>
+</body>
+</html>
