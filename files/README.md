@@ -1,5 +1,5 @@
-# FUTURE_DS_01 — Business Sales Data Analysis
-### FutureInterns Internship · Task 1 of 3
+Business Sales Data Analysis
+
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python) 
 ![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)
@@ -147,12 +147,3 @@ The interactive dashboard includes:
 
 ---
 
-## 👤 Author
-
-**[Your Name]**  
-FutureInterns Data Analytics Internship  
-Task 1 of 3 · FUTURE_DS_01
-
----
-
-*For Task 2, refer to FUTURE_DS_02 repository.*
